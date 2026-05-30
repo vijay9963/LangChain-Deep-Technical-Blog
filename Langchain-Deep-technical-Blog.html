@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LangChain: A Deep Technical Blog</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: #2a2a3e;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #6af7c8;
+    --text: #e8e8f0;
+    --text-muted: #8888aa;
+    --code-bg: #0d0d1a;
+    --heading: #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Lora', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 30%, rgba(124,106,247,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 70%, rgba(106,247,200,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 60% 20%, rgba(247,162,106,0.10) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    background: rgba(106,247,200,0.08);
+    border: 1px solid rgba(106,247,200,0.2);
+    padding: 0.4rem 1.2rem;
+    border-radius: 999px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 8vw, 6.5rem);
+    font-weight: 800;
+    color: var(--heading);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    animation: fadeUp 0.9s 0.1s ease both;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    color: var(--text-muted);
+    max-width: 680px;
+    margin: 1.5rem auto 0;
+    font-style: italic;
+    animation: fadeUp 1s 0.2s ease both;
+  }
+  .hero-meta {
+    margin-top: 2.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;
+    animation: fadeUp 1s 0.3s ease both;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+  .hero-scroll {
+    position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; color: var(--text-muted);
+    animation: fadeUp 1.2s 0.6s ease both;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  /* ── TOC ── */
+  .toc-wrapper {
+    max-width: 820px; margin: 0 auto 3rem;
+    padding: 0 2rem;
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+  }
+  .toc h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1.2rem;
+  }
+  .toc ol { padding-left: 1.2rem; }
+  .toc li { margin: 0.45rem 0; }
+  .toc a { color: var(--text-muted); text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; transition: color 0.2s; }
+  .toc a:hover { color: var(--accent); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── SECTIONS ── */
+  section { padding: 5rem 0; }
+  section + section { border-top: 1px solid var(--border); }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent3); margin-bottom: 1rem;
+  }
+  h2.section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800; color: var(--heading);
+    letter-spacing: -0.02em; line-height: 1.15;
+    margin-bottom: 1.8rem;
+  }
+  h3.sub-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.35rem; font-weight: 700; color: var(--heading);
+    margin: 2.5rem 0 0.8rem;
+  }
+  h3.sub-title .label-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 500;
+    background: rgba(124,106,247,0.15); color: var(--accent);
+    border: 1px solid rgba(124,106,247,0.3);
+    padding: 0.15rem 0.6rem; border-radius: 6px;
+    vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em;
+  }
+  p { margin-bottom: 1.1rem; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: linear-gradient(135deg, rgba(124,106,247,0.08), rgba(106,247,200,0.04));
+    border-left: 3px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 1.8rem 0;
+    font-style: italic;
+    color: var(--text);
+  }
+  .callout strong { color: var(--accent); font-style: normal; }
+
+  /* ── CODE ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1.8rem 0;
+    position: relative;
+  }
+  .code-header {
+    background: var(--surface2);
+    padding: 0.6rem 1.2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span {
+    width: 11px; height: 11px; border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #ff5f56; }
+  .code-dots span:nth-child(2) { background: #ffbd2e; }
+  .code-dots span:nth-child(3) { background: #27c93f; }
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+  pre {
+    padding: 1.5rem 1.5rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #c9d1d9;
+    margin: 0;
+  }
+  .kw  { color: #ff79c6; }
+  .fn  { color: #50fa7b; }
+  .st  { color: #f1fa8c; }
+  .cm  { color: #6272a4; font-style: italic; }
+  .nm  { color: #8be9fd; }
+  .op  { color: #ff79c6; }
+  .cn  { color: #bd93f9; }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    overflow-x: auto;
+  }
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    min-width: 600px;
+  }
+  .flow-box {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    text-align: center;
+    min-width: 100px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .flow-box .icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+  .flow-box .label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--heading);
+    display: block;
+  }
+  .flow-box .sublabel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; color: var(--text-muted);
+    display: block; margin-top: 0.15rem;
+  }
+  .flow-box.accent  { border-color: var(--accent);  background: rgba(124,106,247,0.08); }
+  .flow-box.accent2 { border-color: var(--accent2); background: rgba(247,162,106,0.08); }
+  .flow-box.accent3 { border-color: var(--accent3); background: rgba(106,247,200,0.08); }
+  .flow-arrow {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    padding: 0 0.3rem;
+    flex-shrink: 0;
+  }
+  .flow-arrow-label {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; padding: 0 0.2rem; flex-shrink: 0;
+  }
+  .flow-arrow-label span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem; color: var(--accent); white-space: nowrap;
+  }
+
+  /* ── ARCHITECTURE FULL DIAGRAM ── */
+  .arch-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    overflow-x: auto;
+  }
+  .arch-diagram svg { display: block; margin: auto; }
+
+  /* ── COMPONENT CARDS ── */
+  .component-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .comp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .comp-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .comp-card .comp-icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .comp-card .comp-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem;
+    color: var(--heading); margin-bottom: 0.3rem;
+  }
+  .comp-card .comp-desc {
+    font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;
+  }
+
+  /* ── USE CASE CARDS ── */
+  .usecase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+  .usecase-card .uc-num {
+    font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800;
+    color: rgba(124,106,247,0.15); line-height: 1; margin-bottom: 0.5rem;
+  }
+  .usecase-card h3 {
+    font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700;
+    color: var(--heading); margin-bottom: 1rem;
+  }
+  .uc-section { margin-bottom: 0.8rem; }
+  .uc-section .uc-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+    color: var(--accent2); text-transform: uppercase; letter-spacing: 0.12em;
+    margin-bottom: 0.3rem;
+  }
+  .uc-section p { font-size: 0.9rem; margin: 0; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+  .tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+    background: rgba(124,106,247,0.12); color: var(--accent);
+    border: 1px solid rgba(124,106,247,0.25);
+    padding: 0.2rem 0.6rem; border-radius: 6px;
+  }
+
+  /* ── PRO/CON TABLE ── */
+  .pro-con {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0;
+  }
+  @media (max-width: 600px) { .pro-con { grid-template-columns: 1fr; } }
+  .pro-box, .con-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .pro-box { border-top: 3px solid var(--accent3); }
+  .con-box { border-top: 3px solid #ff5f56; }
+  .pro-box h4, .con-box h4 {
+    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+    color: var(--heading); margin-bottom: 1rem;
+  }
+  .pro-box ul, .con-box ul { list-style: none; padding: 0; }
+  .pro-box li, .con-box li {
+    font-size: 0.88rem; padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.5rem;
+  }
+  .pro-box li:last-child, .con-box li:last-child { border-bottom: none; }
+  .pro-box li::before { content: '✓'; color: var(--accent3); flex-shrink: 0; }
+  .con-box li::before { content: '✗'; color: #ff5f56; flex-shrink: 0; }
+
+  /* ── CONCLUSION ── */
+  .conclusion-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem; margin: 2rem 0;
+  }
+  .takeaway-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem;
+    text-align: center;
+  }
+  .takeaway-card .tc-icon { font-size: 1.8rem; margin-bottom: 0.6rem; }
+  .takeaway-card p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--text-muted);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  /* ── UTILITY ── */
+  .highlight { color: var(--accent); }
+  .highlight2 { color: var(--accent2); }
+  .highlight3 { color: var(--accent3); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+  /* inline code */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.83em;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.4em;
+    border-radius: 5px;
+    color: var(--accent2);
+  }
+
+  hr.divider {
+    border: none; border-top: 1px solid var(--border); margin: 3rem 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HERO ══════════════ -->
+<header class="hero">
+  <div class="hero-tag">🔗 Deep Technical Blog · LangChain</div>
+  <h1>Mastering <span>LangChain</span><br/>From Zero to Agent</h1>
+  <p class="hero-sub">A comprehensive technical deep-dive into the framework powering the modern LLM ecosystem — concepts, code, architecture & real-world patterns.</p>
+  <div class="hero-meta">
+    <span>📘 Python · LangChain · OpenAI</span>
+    <span>⏱ ~35 min read</span>
+    <span>💻 Working Code Examples</span>
+    <span>🏗 Architecture Diagrams</span>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    scroll
+  </div>
+</header>
+
+<!-- ══════════════ TOC ══════════════ -->
+<div class="toc-wrapper">
+  <nav class="toc">
+    <h2>// Table of Contents</h2>
+    <ol>
+      <li><a href="#intro">1. Introduction to LangChain</a></li>
+      <li><a href="#components">2. Core Components</a></li>
+      <li><a href="#architecture">3. Architecture & Flow Diagram</a></li>
+      <li><a href="#hands-on">4. Hands-On Code Examples</a></li>
+      <li><a href="#usecases">5. Real-World Use Cases</a></li>
+      <li><a href="#pros-cons">6. Advantages & Limitations</a></li>
+      <li><a href="#conclusion">7. Conclusion & Future Scope</a></li>
+    </ol>
+  </nav>
+</div>
+
+<!-- ══════════════ SECTION 1: INTRO ══════════════ -->
+<section id="intro">
+  <div class="container">
+    <div class="section-label">// Section 01</div>
+    <h2 class="section-title">Introduction to LangChain</h2>
+
+    <h3 class="sub-title">What is LangChain?</h3>
+    <p>
+      <strong class="highlight">LangChain</strong> is an open-source Python (and JavaScript) framework designed to simplify the development of applications powered by Large Language Models (LLMs). Created by Harrison Chase in October 2022, it quickly became the go-to orchestration layer for anyone building with GPT, Claude, Llama, or any other foundation model.
+    </p>
+    <p>
+      At its core, LangChain is a <em>composition framework</em>: it lets you chain together LLM calls, external tools, memory systems, and data sources into coherent, stateful pipelines. Rather than writing raw API calls and stitching logic yourself, LangChain provides reusable primitives — prompts, chains, agents, retrievers, memory — that snap together like LEGO blocks.
+    </p>
+
+    <div class="callout">
+      <strong>Mental Model:</strong> Think of LangChain as the <em>plumbing layer</em> between your application and LLMs. Without it, you're hand-wiring every pipe. With it, you plug standardised connectors together and focus on what your application should <em>do</em>, not how it calls an API.
+    </div>
+
+    <h3 class="sub-title">Why is it Important in the Modern LLM Ecosystem?</h3>
+    <p>
+      LLMs in isolation are powerful but limited. A raw GPT-4 call can answer a question, but it cannot remember the last conversation, look up live data, run code, or make decisions across multiple steps. LangChain solves this by providing the scaffolding to build <strong>agentic, context-aware</strong> applications.
+    </p>
+    <p>
+      The framework exploded in popularity (100k+ GitHub stars within months) because it abstracts the hardest parts: prompt management, chain orchestration, memory persistence, tool integration, and retrieval-augmented generation (RAG) — all while being model-agnostic.
+    </p>
+
+    <h3 class="sub-title">Problems LangChain Solves</h3>
+    <div class="component-grid">
+      <div class="comp-card">
+        <div class="comp-icon">🎯</div>
+        <div class="comp-name">Orchestration</div>
+        <div class="comp-desc">Coordinate multiple LLM calls, tools, and data sources in a single pipeline with clean error handling and retry logic.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon">⛓️</div>
+        <div class="comp-name">Chaining</div>
+        <div class="comp-desc">Compose complex multi-step reasoning where each step's output feeds the next — like a deterministic workflow over LLM intelligence.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon">🧰</div>
+        <div class="comp-name">Tool Integration</div>
+        <div class="comp-desc">Let models call web search, calculators, databases, APIs, and custom functions — moving beyond static Q&A.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon">🧠</div>
+        <div class="comp-name">Memory</div>
+        <div class="comp-desc">Persist conversation history and user state across turns — building chatbots that actually remember what was said.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon">📚</div>
+        <div class="comp-name">Retrieval (RAG)</div>
+        <div class="comp-desc">Inject relevant private documents into LLM context at query time using vector stores and semantic search.</div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon">🔌</div>
+        <div class="comp-name">Model Agnosticism</div>
+        <div class="comp-desc">Swap OpenAI for Anthropic, HuggingFace, or a local Ollama model with a single line change — same chain code throughout.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 2: COMPONENTS ══════════════ -->
+<section id="components">
+  <div class="container">
+    <div class="section-label">// Section 02</div>
+    <h2 class="section-title">Core Components of LangChain</h2>
+
+    <!-- LLMs & Chat Models -->
+    <h3 class="sub-title">1. LLMs & Chat Models <span class="label-pill">langchain_openai</span></h3>
+    <p>
+      The <strong class="highlight">LLM abstraction</strong> is LangChain's foundational primitive. It wraps any language model — GPT-4o, Claude 3, Llama 3, Mistral — behind a consistent interface. There are two flavours:
+    </p>
+    <p>
+      <strong>LLMs</strong> take a plain string and return a string. <strong>ChatModels</strong> take a list of <code>HumanMessage</code>, <code>AIMessage</code>, <code>SystemMessage</code> objects and return a <code>ChatMessage</code>. ChatModels are the modern standard — they map exactly to the conversation-turn model that OpenAI, Anthropic, and others expose.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · llm_basics.py</span>
+      </div>
+<pre><span class="cm"># Install: pip install langchain langchain-openai</span>
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> <span class="nm">HumanMessage</span>, <span class="nm">SystemMessage</span>
+<span class="kw">import</span> os
+
+<span class="cm"># Initialise the model (uses OPENAI_API_KEY env var automatically)</span>
+llm = <span class="nm">ChatOpenAI</span>(
+    model=<span class="st">"gpt-4o-mini"</span>,
+    temperature=<span class="cn">0.7</span>,     <span class="cm"># creativity dial: 0 = deterministic, 1 = creative</span>
+    max_tokens=<span class="cn">512</span>
+)
+
+<span class="cm"># Simple invocation with a message list</span>
+messages = [
+    <span class="nm">SystemMessage</span>(content=<span class="st">"You are a senior Python engineer. Be concise and precise."</span>),
+    <span class="nm">HumanMessage</span>(content=<span class="st">"Explain Python's GIL in two sentences."</span>)
+]
+
+response = llm.invoke(messages)
+<span class="fn">print</span>(response.content)
+<span class="cm"># → "The GIL is a mutex that allows only one thread to execute Python bytecode ..."</span>
+
+<span class="cm"># Streaming output token by token</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> llm.stream(messages):
+    <span class="fn">print</span>(chunk.content, end=<span class="st">""</span>, flush=<span class="cn">True</span>)</pre>
+    </div>
+
+    <!-- Prompt Templates -->
+    <h3 class="sub-title">2. Prompts & Prompt Templates <span class="label-pill">langchain_core</span></h3>
+    <p>
+      <strong class="highlight">Prompt Templates</strong> are parameterised prompt factories. Instead of f-strings scattered across your codebase, you define a template once and inject variables at call time. This enables prompt versioning, testing, and reuse.
+    </p>
+    <p>
+      <code>ChatPromptTemplate</code> is the modern way — it creates a list of typed messages from a template. The <code>.from_messages()</code> factory accepts <code>("system", ...)</code>, <code>("human", ...)</code>, and <code>("ai", ...)</code> tuples.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · prompt_templates.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>, <span class="nm">PromptTemplate</span>
+
+<span class="cm"># ── ChatPromptTemplate (recommended for chat models) ──</span>
+chat_prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a {role} expert. Answer in {language}."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+<span class="cm"># Format the prompt — produces a list of BaseMessages</span>
+messages = chat_prompt.format_messages(
+    role=<span class="st">"machine learning"</span>,
+    language=<span class="st">"English"</span>,
+    question=<span class="st">"What is gradient descent?"</span>
+)
+
+<span class="cm"># ── PromptTemplate (for simple string LLMs) ──</span>
+simple_prompt = <span class="nm">PromptTemplate</span>(
+    input_variables=[<span class="st">"product"</span>, <span class="st">"tone"</span>],
+    template=<span class="st">"Write a {tone} tagline for: {product}"</span>
+)
+<span class="fn">print</span>(simple_prompt.format(product=<span class="st">"AI tutor app"</span>, tone=<span class="st">"inspirational"</span>))
+<span class="cm"># → "Write an inspirational tagline for: AI tutor app"</span>
+
+<span class="cm"># ── Partial Templates (pre-fill some vars) ──</span>
+partial = simple_prompt.partial(tone=<span class="st">"humorous"</span>)
+<span class="fn">print</span>(partial.format(product=<span class="st">"coffee machine"</span>))
+<span class="cm"># → "Write a humorous tagline for: coffee machine"</span></pre>
+    </div>
+
+    <!-- Chains -->
+    <h3 class="sub-title">3. Chains — LCEL <span class="label-pill">LangChain Expression Language</span></h3>
+    <p>
+      A <strong class="highlight">Chain</strong> links components together using the pipe operator <code>|</code>. LangChain Expression Language (LCEL) is the modern way to compose chains declaratively. Every LCEL chain is a <code>Runnable</code> — it supports <code>.invoke()</code>, <code>.stream()</code>, <code>.batch()</code>, and <code>.ainvoke()</code> out of the box.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · chains_lcel.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> <span class="nm">StrOutputParser</span>
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>)
+
+<span class="cm"># ── Simple Chain: prompt | llm | parser ──</span>
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a code review assistant."</span>),
+    (<span class="st">"human"</span>, <span class="st">"Review this Python snippet:\n\n{code}"</span>)
+])
+
+chain = prompt | llm | <span class="nm">StrOutputParser</span>()
+
+review = chain.invoke({<span class="st">"code"</span>: <span class="st">"def add(a,b): return a+b"</span>})
+<span class="fn">print</span>(review)
+
+<span class="cm"># ── Sequential Chain: translate then summarise ──</span>
+translate_prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"human"</span>, <span class="st">"Translate to French: {text}"</span>)
+])
+summarise_prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"human"</span>, <span class="st">"Summarise in 1 sentence: {translated}"</span>)
+])
+
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> <span class="nm">RunnablePassthrough</span>
+
+full_chain = (
+    translate_prompt | llm | <span class="nm">StrOutputParser</span>()
+    | (<span class="kw">lambda</span> x: {<span class="st">"translated"</span>: x})
+    | summarise_prompt | llm | <span class="nm">StrOutputParser</span>()
+)
+
+result = full_chain.invoke({<span class="st">"text"</span>: <span class="st">"LangChain makes LLM apps easy."</span>})
+<span class="fn">print</span>(result)
+
+<span class="cm"># ── Parallel Chain: run two branches simultaneously ──</span>
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> <span class="nm">RunnableParallel</span>
+
+parallel = <span class="nm">RunnableParallel</span>({
+    <span class="st">"pros"</span>: (<span class="nm">ChatPromptTemplate</span>.from_messages([(<span class="st">"human"</span>, <span class="st">"List 3 pros of {topic}"</span>)]) | llm | <span class="nm">StrOutputParser</span>()),
+    <span class="st">"cons"</span>: (<span class="nm">ChatPromptTemplate</span>.from_messages([(<span class="st">"human"</span>, <span class="st">"List 3 cons of {topic}"</span>)]) | llm | <span class="nm">StrOutputParser</span>()),
+})
+
+out = parallel.invoke({<span class="st">"topic"</span>: <span class="st">"microservices"</span>})
+<span class="fn">print</span>(out[<span class="st">"pros"</span>])
+<span class="fn">print</span>(out[<span class="st">"cons"</span>])</pre>
+    </div>
+
+    <!-- Memory -->
+    <h3 class="sub-title">4. Memory <span class="label-pill">langchain_core</span></h3>
+    <p>
+      LLMs are stateless by default — each API call is independent. <strong class="highlight">Memory</strong> gives chains persistence. LangChain offers several strategies: storing the full history (<code>ConversationBufferMemory</code>), a windowed slice (<code>ConversationBufferWindowMemory</code>), a compressed summary (<code>ConversationSummaryMemory</code>), or a token-limited hybrid.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · memory_example.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.chat_history <span class="kw">import</span> <span class="nm">BaseChatMessageHistory</span>
+<span class="kw">from</span> langchain_core.runnables.history <span class="kw">import</span> <span class="nm">RunnableWithMessageHistory</span>
+<span class="kw">from</span> langchain_community.chat_message_histories <span class="kw">import</span> <span class="nm">ChatMessageHistory</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>, <span class="nm">MessagesPlaceholder</span>
+
+<span class="cm"># In-memory store keyed by session_id</span>
+store = {}
+
+<span class="kw">def</span> <span class="fn">get_session_history</span>(session_id: str) -> <span class="nm">BaseChatMessageHistory</span>:
+    <span class="kw">if</span> session_id <span class="kw">not in</span> store:
+        store[session_id] = <span class="nm">ChatMessageHistory</span>()
+    <span class="kw">return</span> store[session_id]
+
+<span class="cm"># Prompt includes a placeholder for history injection</span>
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a friendly assistant named Aria."</span>),
+    <span class="nm">MessagesPlaceholder</span>(variable_name=<span class="st">"chat_history"</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>)
+])
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>)
+chain = prompt | llm
+
+<span class="cm"># Wrap with history management</span>
+chat_chain = <span class="nm">RunnableWithMessageHistory</span>(
+    chain,
+    get_session_history,
+    input_messages_key=<span class="st">"input"</span>,
+    history_messages_key=<span class="st">"chat_history"</span>
+)
+
+config = {<span class="st">"configurable"</span>: {<span class="st">"session_id"</span>: <span class="st">"user_42"</span>}}
+
+resp1 = chat_chain.invoke({<span class="st">"input"</span>: <span class="st">"Hi! My name is Ravi."</span>}, config=config)
+<span class="fn">print</span>(resp1.content)   <span class="cm"># "Hello Ravi! How can I help you today?"</span>
+
+resp2 = chat_chain.invoke({<span class="st">"input"</span>: <span class="st">"What is my name?"</span>}, config=config)
+<span class="fn">print</span>(resp2.content)   <span class="cm"># "Your name is Ravi, as you mentioned earlier!"</span></pre>
+    </div>
+
+    <!-- Agents -->
+    <h3 class="sub-title">5. Agents <span class="label-pill">ReAct · Tool-Calling</span></h3>
+    <p>
+      <strong class="highlight">Agents</strong> are LangChain's most powerful abstraction. Instead of a pre-defined chain, an agent lets the LLM <em>decide at runtime</em> which tools to call, in what order, and when to return a final answer. This implements the <strong>ReAct</strong> (Reasoning + Acting) pattern.
+    </p>
+    <p>
+      Modern LangChain uses <strong>tool-calling agents</strong>, which rely on the model's native function/tool-calling capability (OpenAI, Anthropic, Gemini all support this) rather than prompt-based parsing. The agent receives a list of tool schemas, picks one, gets the result, then iterates until it has a final answer.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · agent_example.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.tools <span class="kw">import</span> tool
+<span class="kw">from</span> langchain.agents <span class="kw">import</span> create_tool_calling_agent, <span class="nm">AgentExecutor</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>, <span class="nm">MessagesPlaceholder</span>
+
+<span class="cm"># ── Define tools with @tool decorator ──</span>
+<span class="op">@tool</span>
+<span class="kw">def</span> <span class="fn">calculator</span>(expression: str) -> str:
+    <span class="st">"""Evaluate a mathematical expression. Input: '2 ** 10 + 5'"""</span>
+    <span class="kw">try</span>:
+        <span class="kw">return</span> <span class="fn">str</span>(<span class="fn">eval</span>(expression, {<span class="st">"__builtins__"</span>: {}}, {}))
+    <span class="kw">except Exception</span> <span class="kw">as</span> e:
+        <span class="kw">return</span> <span class="fn">f</span><span class="st">"Error: {e}"</span>
+
+<span class="op">@tool</span>
+<span class="kw">def</span> <span class="fn">word_count</span>(text: str) -> str:
+    <span class="st">"""Count the number of words in a text string."""</span>
+    <span class="kw">return</span> <span class="fn">f</span><span class="st">"{len(text.split())} words"</span>
+
+tools = [calculator, word_count]
+
+<span class="cm"># ── Create agent prompt ──</span>
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a helpful assistant with access to tools."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>),
+    <span class="nm">MessagesPlaceholder</span>(variable_name=<span class="st">"agent_scratchpad"</span>)
+])
+
+<span class="cm"># ── Bind tools to the model ──</span>
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>, temperature=<span class="cn">0</span>)
+agent = create_tool_calling_agent(llm, tools, prompt)
+
+<span class="cm"># ── AgentExecutor runs the loop ──</span>
+executor = <span class="nm">AgentExecutor</span>(agent=agent, tools=tools, verbose=<span class="cn">True</span>, max_iterations=<span class="cn">5</span>)
+
+result = executor.invoke({<span class="st">"input"</span>: <span class="st">"What is 2 to the power of 10, and how many words in 'Hello beautiful world'?"</span>})
+<span class="fn">print</span>(result[<span class="st">"output"</span>])
+<span class="cm"># Agent calls calculator → 1024, then word_count → 3 words, then synthesises answer.</span></pre>
+    </div>
+
+    <!-- Tools -->
+    <h3 class="sub-title">6. Tools <span class="label-pill">langchain_community</span></h3>
+    <p>
+      <strong class="highlight">Tools</strong> are the interfaces through which agents interact with the world. LangChain ships 50+ pre-built tools and makes it trivial to define custom ones. Every tool has a <code>name</code>, a <code>description</code> (used by the LLM to decide when to call it), and a callable function.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · tools_example.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_core.tools <span class="kw">import</span> tool, <span class="nm">BaseTool</span>
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">Field</span>
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Type</span>
+<span class="kw">import</span> requests
+
+<span class="cm"># ── Method 1: @tool decorator (simplest) ──</span>
+<span class="op">@tool</span>
+<span class="kw">def</span> <span class="fn">get_weather</span>(city: str) -> str:
+    <span class="st">"""Get current weather for a city using Open-Meteo (free, no API key)."""</span>
+    geo = requests.get(<span class="fn">f</span><span class="st">"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1"</span>).json()
+    <span class="kw">if not</span> geo.get(<span class="st">"results"</span>): <span class="kw">return</span> <span class="st">"City not found"</span>
+    lat = geo[<span class="st">"results"</span>][<span class="cn">0</span>][<span class="st">"latitude"</span>]
+    lon = geo[<span class="st">"results"</span>][<span class="cn">0</span>][<span class="st">"longitude"</span>]
+    weather = requests.get(
+        <span class="fn">f</span><span class="st">"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"</span>
+    ).json()
+    temp = weather[<span class="st">"current_weather"</span>][<span class="st">"temperature"</span>]
+    <span class="kw">return</span> <span class="fn">f</span><span class="st">"Current temperature in {city}: {temp}°C"</span>
+
+<span class="cm"># ── Method 2: Class-based Tool (for complex input schemas) ──</span>
+<span class="kw">class</span> <span class="nm">SearchInput</span>(<span class="nm">BaseModel</span>):
+    query: str = <span class="nm">Field</span>(description=<span class="st">"The search query string"</span>)
+    max_results: int = <span class="nm">Field</span>(default=<span class="cn">3</span>, description=<span class="st">"Number of results to return"</span>)
+
+<span class="kw">class</span> <span class="nm">WebSearchTool</span>(<span class="nm">BaseTool</span>):
+    name: str = <span class="st">"web_search"</span>
+    description: str = <span class="st">"Search the web for recent information"</span>
+    args_schema: <span class="nm">Type</span>[<span class="nm">BaseModel</span>] = <span class="nm">SearchInput</span>
+
+    <span class="kw">def</span> <span class="fn">_run</span>(<span class="kw">self</span>, query: str, max_results: int = <span class="cn">3</span>) -> str:
+        <span class="kw">return</span> <span class="fn">f</span><span class="st">"[Mock] Top {max_results} results for '{query}'"</span>
+
+<span class="fn">print</span>(get_weather.name)         <span class="cm"># get_weather</span>
+<span class="fn">print</span>(get_weather.description)  <span class="cm"># Get current weather...</span>
+<span class="fn">print</span>(get_weather.invoke({<span class="st">"city"</span>: <span class="st">"Hyderabad"</span>}))</pre>
+    </div>
+
+    <!-- Document Loaders -->
+    <h3 class="sub-title">7. Document Loaders <span class="label-pill">langchain_community</span></h3>
+    <p>
+      <strong class="highlight">Document Loaders</strong> ingest raw data from any source — PDFs, web pages, CSV files, GitHub repos, Notion pages, YouTube transcripts — and convert them into LangChain's <code>Document</code> objects. Each <code>Document</code> has <code>page_content</code> (the text) and <code>metadata</code> (source, page number, etc.).
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · document_loaders.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> (
+    <span class="nm">PyPDFLoader</span>,        <span class="cm"># pip install pypdf</span>
+    <span class="nm">WebBaseLoader</span>,      <span class="cm"># pip install beautifulsoup4</span>
+    <span class="nm">CSVLoader</span>,
+    <span class="nm">TextLoader</span>
+)
+<span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> <span class="nm">RecursiveCharacterTextSplitter</span>
+
+<span class="cm"># ── Load a PDF ──</span>
+pdf_loader = <span class="nm">PyPDFLoader</span>(<span class="st">"research_paper.pdf"</span>)
+pdf_docs = pdf_loader.load()
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"Loaded {len(pdf_docs)} pages"</span>)
+<span class="fn">print</span>(pdf_docs[<span class="cn">0</span>].metadata)   <span class="cm"># {'source': 'research_paper.pdf', 'page': 0}</span>
+
+<span class="cm"># ── Load a webpage ──</span>
+web_loader = <span class="nm">WebBaseLoader</span>(<span class="st">"https://python.org/about/"</span>)
+web_docs = web_loader.load()
+
+<span class="cm"># ── Split into chunks for embedding ──</span>
+splitter = <span class="nm">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="cn">1000</span>,      <span class="cm"># ~750 tokens per chunk</span>
+    chunk_overlap=<span class="cn">200</span>,    <span class="cm"># overlap preserves context at boundaries</span>
+    length_function=<span class="fn">len</span>,
+    separators=[<span class="st">"\n\n"</span>, <span class="st">"\n"</span>, <span class="st">" "</span>, <span class="st">""</span>]
+)
+
+chunks = splitter.split_documents(web_docs)
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"Split into {len(chunks)} chunks"</span>)
+<span class="fn">print</span>(chunks[<span class="cn">0</span>].page_content[:<span class="cn">200</span>])</pre>
+    </div>
+
+    <!-- Vector Stores -->
+    <h3 class="sub-title">8. Indexes & Vector Stores <span class="label-pill">RAG Pipeline</span></h3>
+    <p>
+      <strong class="highlight">Vector Stores</strong> enable semantic search over your documents. Text is converted into high-dimensional embeddings (numerical vectors), stored in an index, and at query time the closest matching chunks are retrieved and injected into the LLM's context. This is the core of <strong>Retrieval-Augmented Generation (RAG)</strong>.
+    </p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · rag_pipeline.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">OpenAIEmbeddings</span>, <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_chroma <span class="kw">import</span> <span class="nm">Chroma</span>                    <span class="cm"># pip install langchain-chroma chromadb</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> <span class="nm">StrOutputParser</span>
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> <span class="nm">RunnablePassthrough</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> <span class="nm">WebBaseLoader</span>
+<span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> <span class="nm">RecursiveCharacterTextSplitter</span>
+
+<span class="cm"># ── Step 1: Load & split documents ──</span>
+loader = <span class="nm">WebBaseLoader</span>(<span class="st">"https://docs.python.org/3/library/asyncio.html"</span>)
+docs = loader.load()
+splitter = <span class="nm">RecursiveCharacterTextSplitter</span>(chunk_size=<span class="cn">800</span>, chunk_overlap=<span class="cn">100</span>)
+chunks = splitter.split_documents(docs)
+
+<span class="cm"># ── Step 2: Embed & store in Chroma ──</span>
+embeddings = <span class="nm">OpenAIEmbeddings</span>(model=<span class="st">"text-embedding-3-small"</span>)
+vectorstore = <span class="nm">Chroma</span>.from_documents(chunks, embeddings)
+retriever = vectorstore.as_retriever(search_kwargs={<span class="st">"k"</span>: <span class="cn">4</span>})
+
+<span class="cm"># ── Step 3: Build RAG chain ──</span>
+rag_prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"Answer using only the provided context.\nContext:\n{context}"</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+<span class="kw">def</span> <span class="fn">format_docs</span>(docs):
+    <span class="kw">return</span> <span class="st">"\n\n"</span>.join(doc.page_content <span class="kw">for</span> doc <span class="kw">in</span> docs)
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>)
+
+rag_chain = (
+    {<span class="st">"context"</span>: retriever | format_docs, <span class="st">"question"</span>: <span class="nm">RunnablePassthrough</span>()}
+    | rag_prompt
+    | llm
+    | <span class="nm">StrOutputParser</span>()
+)
+
+answer = rag_chain.invoke(<span class="st">"How does asyncio event loop work?"</span>)
+<span class="fn">print</span>(answer)</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 3: ARCHITECTURE ══════════════ -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-label">// Section 03</div>
+    <h2 class="section-title">Architecture & Flow Diagram</h2>
+
+    <p>
+      The LangChain execution flow begins with a user's natural language input and ends with a structured, grounded, or action-driven output. Below is the canonical flow for an agent-powered application — the most complex and representative path.
+    </p>
+
+    <!-- Simple Flow -->
+    <h3 class="sub-title">Conceptual Flow</h3>
+    <div class="diagram-wrapper">
+      <div class="flow-diagram">
+        <div class="flow-box accent">
+          <span class="icon">👤</span>
+          <span class="label">User Input</span>
+          <span class="sublabel">natural language</span>
+        </div>
+        <div class="flow-arrow-label">
+          <span>→</span><span>inject vars</span>
+        </div>
+        <div class="flow-box">
+          <span class="icon">📝</span>
+          <span class="label">Prompt Template</span>
+          <span class="sublabel">format + context</span>
+        </div>
+        <div class="flow-arrow-label">
+          <span>→</span><span>API call</span>
+        </div>
+        <div class="flow-box accent2">
+          <span class="icon">🤖</span>
+          <span class="label">LLM</span>
+          <span class="sublabel">GPT-4 / Claude</span>
+        </div>
+        <div class="flow-arrow-label">
+          <span>→</span><span>decide</span>
+        </div>
+        <div class="flow-box">
+          <span class="icon">🧠</span>
+          <span class="label">Agent</span>
+          <span class="sublabel">ReAct loop</span>
+        </div>
+        <div class="flow-arrow-label">
+          <span>→</span><span>call</span>
+        </div>
+        <div class="flow-box">
+          <span class="icon">🔧</span>
+          <span class="label">Tools</span>
+          <span class="sublabel">search / APIs</span>
+        </div>
+        <div class="flow-arrow-label">
+          <span>→</span><span>final</span>
+        </div>
+        <div class="flow-box accent3">
+          <span class="icon">✅</span>
+          <span class="label">Output</span>
+          <span class="sublabel">parsed response</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Architecture SVG Diagram -->
+    <h3 class="sub-title">Full Architecture Diagram</h3>
+    <div class="arch-diagram">
+      <svg width="720" height="480" viewBox="0 0 720 480" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono', monospace">
+        <!-- Background layers -->
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#7c6af7" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#6af7c8" stop-opacity="0.05"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f7a26a" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#f7a26a" stop-opacity="0.04"/>
+          </linearGradient>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#8888aa"/>
+          </marker>
+          <marker id="arrowhead-accent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#7c6af7"/>
+          </marker>
+        </defs>
+
+        <!-- Layer labels -->
+        <text x="16" y="30" fill="#8888aa" font-size="9" letter-spacing="2">APPLICATION LAYER</text>
+        <text x="16" y="185" fill="#8888aa" font-size="9" letter-spacing="2">LANGCHAIN LAYER</text>
+        <text x="16" y="360" fill="#8888aa" font-size="9" letter-spacing="2">EXTERNAL SERVICES LAYER</text>
+
+        <!-- App Layer Band -->
+        <rect x="10" y="38" width="700" height="110" rx="12" fill="url(#g1)" stroke="#2a2a3e" stroke-width="1"/>
+        <!-- LC Layer Band -->
+        <rect x="10" y="193" width="700" height="145" rx="12" fill="rgba(30,30,50,0.5)" stroke="#2a2a3e" stroke-width="1"/>
+        <!-- External Layer Band -->
+        <rect x="10" y="368" width="700" height="100" rx="12" fill="url(#g2)" stroke="#2a2a3e" stroke-width="1"/>
+
+        <!-- ── App Layer Nodes ── -->
+        <!-- User -->
+        <rect x="30" y="62" width="90" height="60" rx="10" fill="#1a1a26" stroke="#7c6af7" stroke-width="1.5"/>
+        <text x="75" y="87" fill="white" font-size="18" text-anchor="middle">👤</text>
+        <text x="75" y="105" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">User Input</text>
+        <text x="75" y="118" fill="#8888aa" font-size="8" text-anchor="middle">natural language</text>
+
+        <!-- Prompt Template -->
+        <rect x="180" y="62" width="110" height="60" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="235" y="87" fill="white" font-size="18" text-anchor="middle">📝</text>
+        <text x="235" y="105" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">Prompt Template</text>
+        <text x="235" y="118" fill="#8888aa" font-size="8" text-anchor="middle">inject variables</text>
+
+        <!-- Output Parser -->
+        <rect x="580" y="62" width="110" height="60" rx="10" fill="#1a1a26" stroke="#6af7c8" stroke-width="1.5"/>
+        <text x="635" y="87" fill="white" font-size="18" text-anchor="middle">✅</text>
+        <text x="635" y="105" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">Output</text>
+        <text x="635" y="118" fill="#8888aa" font-size="8" text-anchor="middle">parsed + formatted</text>
+
+        <!-- ── LangChain Layer ── -->
+        <!-- Chain/LCEL -->
+        <rect x="30" y="215" width="100" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="80" y="237" fill="white" font-size="14" text-anchor="middle">⛓️</text>
+        <text x="80" y="252" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">LCEL Chain</text>
+        <text x="80" y="262" fill="#8888aa" font-size="8" text-anchor="middle">pipe operator</text>
+
+        <!-- Memory -->
+        <rect x="160" y="215" width="100" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="210" y="237" fill="white" font-size="14" text-anchor="middle">🧠</text>
+        <text x="210" y="252" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">Memory</text>
+        <text x="210" y="262" fill="#8888aa" font-size="8" text-anchor="middle">conversation state</text>
+
+        <!-- LLM -->
+        <rect x="295" y="205" width="130" height="70" rx="10" fill="#1a1a26" stroke="#f7a26a" stroke-width="1.5"/>
+        <text x="360" y="232" fill="white" font-size="20" text-anchor="middle">🤖</text>
+        <text x="360" y="252" fill="#e8e8f0" font-size="11" text-anchor="middle" font-weight="bold">LLM / ChatModel</text>
+        <text x="360" y="265" fill="#8888aa" font-size="8" text-anchor="middle">GPT-4o · Claude · Llama</text>
+
+        <!-- Agent -->
+        <rect x="455" y="215" width="100" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="505" y="237" fill="white" font-size="14" text-anchor="middle">🎯</text>
+        <text x="505" y="252" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">Agent</text>
+        <text x="505" y="262" fill="#8888aa" font-size="8" text-anchor="middle">ReAct loop</text>
+
+        <!-- Retriever -->
+        <rect x="585" y="215" width="110" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="640" y="237" fill="white" font-size="14" text-anchor="middle">🔍</text>
+        <text x="640" y="252" fill="#e8e8f0" font-size="10" text-anchor="middle" font-weight="bold">Retriever</text>
+        <text x="640" y="262" fill="#8888aa" font-size="8" text-anchor="middle">semantic search</text>
+
+        <!-- ── External Layer ── -->
+        <!-- OpenAI API -->
+        <rect x="30" y="388" width="90" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="75" y="410" fill="white" font-size="14" text-anchor="middle">⚡</text>
+        <text x="75" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">OpenAI API</text>
+        <text x="75" y="436" fill="#8888aa" font-size="7" text-anchor="middle">gpt-4o-mini</text>
+
+        <!-- HuggingFace -->
+        <rect x="145" y="388" width="95" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="192" y="410" fill="white" font-size="14" text-anchor="middle">🤗</text>
+        <text x="192" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">HuggingFace</text>
+        <text x="192" y="436" fill="#8888aa" font-size="7" text-anchor="middle">local models</text>
+
+        <!-- Web Search -->
+        <rect x="265" y="388" width="90" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="310" y="410" fill="white" font-size="14" text-anchor="middle">🌐</text>
+        <text x="310" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">Web Search</text>
+        <text x="310" y="436" fill="#8888aa" font-size="7" text-anchor="middle">Tavily · SerpAPI</text>
+
+        <!-- Vector DB -->
+        <rect x="380" y="388" width="90" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="425" y="410" fill="white" font-size="14" text-anchor="middle">🗄️</text>
+        <text x="425" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">Vector DB</text>
+        <text x="425" y="436" fill="#8888aa" font-size="7" text-anchor="middle">Chroma · Pinecone</text>
+
+        <!-- Custom Tools -->
+        <rect x="495" y="388" width="90" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="540" y="410" fill="white" font-size="14" text-anchor="middle">🔧</text>
+        <text x="540" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">Custom Tools</text>
+        <text x="540" y="436" fill="#8888aa" font-size="7" text-anchor="middle">APIs · DBs · code</text>
+
+        <!-- Callbacks -->
+        <rect x="610" y="388" width="90" height="55" rx="10" fill="#1a1a26" stroke="#2a2a3e" stroke-width="1.5"/>
+        <text x="655" y="410" fill="white" font-size="14" text-anchor="middle">📊</text>
+        <text x="655" y="425" fill="#e8e8f0" font-size="9" text-anchor="middle" font-weight="bold">Callbacks</text>
+        <text x="655" y="436" fill="#8888aa" font-size="7" text-anchor="middle">LangSmith tracing</text>
+
+        <!-- ── Arrows ── -->
+        <!-- User → Prompt -->
+        <line x1="120" y1="92" x2="175" y2="92" stroke="#8888aa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <!-- Prompt → LLM (down) -->
+        <line x1="235" y1="122" x2="310" y2="218" stroke="#8888aa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+        <!-- LLM → Agent -->
+        <line x1="425" y1="242" x2="450" y2="242" stroke="#f7a26a" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <!-- Agent → Output (up) -->
+        <line x1="505" y1="215" x2="580" y2="105" stroke="#7c6af7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowhead-accent)"/>
+        <!-- Chain → LLM -->
+        <line x1="130" y1="242" x2="290" y2="242" stroke="#8888aa" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <!-- Memory → LLM -->
+        <line x1="210" y1="215" x2="270" y2="230" stroke="#8888aa" stroke-width="1" stroke-dasharray="3,3"/>
+        <!-- Retriever → LLM -->
+        <line x1="585" y1="242" x2="430" y2="242" stroke="#6af7c8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <!-- LLM ↔ OpenAI -->
+        <line x1="340" y1="275" x2="120" y2="388" stroke="#8888aa" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="345" y1="275" x2="192" y2="388" stroke="#8888aa" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Agent → WebSearch -->
+        <line x1="505" y1="270" x2="340" y2="388" stroke="#8888aa" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Agent → CustomTools -->
+        <line x1="530" y1="270" x2="535" y2="388" stroke="#8888aa" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Retriever → VectorDB -->
+        <line x1="615" y1="270" x2="460" y2="388" stroke="#6af7c8" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Callbacks -->
+        <line x1="505" y1="270" x2="650" y2="388" stroke="#8888aa" stroke-width="1" stroke-dasharray="4,3"/>
+      </svg>
+    </div>
+
+    <p>
+      The diagram shows three stacked layers: the <strong class="highlight">Application Layer</strong> (user ↔ prompts ↔ output), the <strong class="highlight">LangChain Layer</strong> (chains, memory, agents, retriever), and the <strong class="highlight">External Services Layer</strong> (LLM providers, databases, tools). LCEL's pipe operator connects everything in the middle tier, while agents loop between the LLM and tools until the task is complete.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 4: HANDS-ON ══════════════ -->
+<section id="hands-on">
+  <div class="container">
+    <div class="section-label">// Section 04</div>
+    <h2 class="section-title">Hands-On Code Examples</h2>
+
+    <h3 class="sub-title">Example 1 — Basic LLM Call</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · 01_basic_llm.py</span>
+      </div>
+<pre><span class="kw">import</span> os
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.messages <span class="kw">import</span> <span class="nm">HumanMessage</span>
+
+os.environ[<span class="st">"OPENAI_API_KEY"</span>] = <span class="st">"your-api-key-here"</span>
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>, temperature=<span class="cn">0.5</span>)
+response = llm.invoke([<span class="nm">HumanMessage</span>(content=<span class="st">"What is LangChain?"</span>)])
+<span class="fn">print</span>(response.content)</pre>
+    </div>
+
+    <h3 class="sub-title">Example 2 — PromptTemplate in Action</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · 02_prompt_chain.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> <span class="nm">StrOutputParser</span>
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>)
+parser = <span class="nm">StrOutputParser</span>()
+
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are an expert in {domain}. Explain concepts clearly with examples."</span>),
+    (<span class="st">"human"</span>, <span class="st">"Explain {concept} to a {audience}."</span>)
+])
+
+<span class="cm"># LCEL chain — the | operator creates a Runnable sequence</span>
+chain = prompt | llm | parser
+
+<span class="cm"># Single call</span>
+result = chain.invoke({
+    <span class="st">"domain"</span>: <span class="st">"quantum computing"</span>,
+    <span class="st">"concept"</span>: <span class="st">"superposition"</span>,
+    <span class="st">"audience"</span>: <span class="st">"10-year-old"</span>
+})
+<span class="fn">print</span>(result)
+
+<span class="cm"># Batch — run multiple inputs in parallel automatically</span>
+inputs = [
+    {<span class="st">"domain"</span>: <span class="st">"biology"</span>, <span class="st">"concept"</span>: <span class="st">"CRISPR"</span>, <span class="st">"audience"</span>: <span class="st">"student"</span>},
+    {<span class="st">"domain"</span>: <span class="st">"finance"</span>, <span class="st">"concept"</span>: <span class="st">"compound interest"</span>, <span class="st">"audience"</span>: <span class="st">"teenager"</span>},
+]
+results = chain.batch(inputs)
+<span class="kw">for</span> r <span class="kw">in</span> results:
+    <span class="fn">print</span>(r[:<span class="cn">100</span>], <span class="st">"..."</span>)</pre>
+    </div>
+
+    <h3 class="sub-title">Example 3 — Full RAG Chain with LCEL</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · 03_rag_chain.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>, <span class="nm">OpenAIEmbeddings</span>
+<span class="kw">from</span> langchain_chroma <span class="kw">import</span> <span class="nm">Chroma</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> <span class="nm">RunnablePassthrough</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> <span class="nm">StrOutputParser</span>
+<span class="kw">from</span> langchain_core.documents <span class="kw">import</span> <span class="nm">Document</span>
+
+<span class="cm"># Simulated documents (replace with real DocumentLoader)</span>
+docs = [
+    <span class="nm">Document</span>(page_content=<span class="st">"LangChain was created by Harrison Chase in 2022."</span>),
+    <span class="nm">Document</span>(page_content=<span class="st">"LCEL is LangChain Expression Language — it uses | to compose Runnables."</span>),
+    <span class="nm">Document</span>(page_content=<span class="st">"LangSmith is the observability platform for LangChain applications."</span>),
+    <span class="nm">Document</span>(page_content=<span class="st">"LangGraph enables stateful multi-agent workflows with cycles."</span>),
+]
+
+<span class="cm"># Build vector store and retriever</span>
+embeddings = <span class="nm">OpenAIEmbeddings</span>()
+vectorstore = <span class="nm">Chroma</span>.from_documents(docs, embeddings)
+retriever = vectorstore.as_retriever(search_kwargs={<span class="st">"k"</span>: <span class="cn">2</span>})
+
+<span class="cm"># RAG prompt</span>
+rag_prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a helpful assistant. Use ONLY the context below.\n\nContext:\n{context}"</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>, temperature=<span class="cn">0</span>)
+
+<span class="cm"># Elegant LCEL RAG chain</span>
+rag_chain = (
+    {
+        <span class="st">"context"</span>: retriever | (<span class="kw">lambda</span> docs: <span class="st">"\n"</span>.join(d.page_content <span class="kw">for</span> d <span class="kw">in</span> docs)),
+        <span class="st">"question"</span>: <span class="nm">RunnablePassthrough</span>()
+    }
+    | rag_prompt
+    | llm
+    | <span class="nm">StrOutputParser</span>()
+)
+
+answer = rag_chain.invoke(<span class="st">"What is LCEL?"</span>)
+<span class="fn">print</span>(answer)  <span class="cm"># → "LCEL stands for LangChain Expression Language..."</span></pre>
+    </div>
+
+    <h3 class="sub-title">Example 4 — Agent with Web Search Tool</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · 04_web_agent.py</span>
+      </div>
+<pre><span class="cm"># pip install langchain langchain-openai tavily-python</span>
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_community.tools.tavily_search <span class="kw">import</span> <span class="nm">TavilySearchResults</span>
+<span class="kw">from</span> langchain.agents <span class="kw">import</span> create_tool_calling_agent, <span class="nm">AgentExecutor</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>, <span class="nm">MessagesPlaceholder</span>
+<span class="kw">import</span> os
+
+os.environ[<span class="st">"TAVILY_API_KEY"</span>] = <span class="st">"your-tavily-key"</span>
+
+<span class="cm"># Web search tool — returns top 3 results with content</span>
+search = <span class="nm">TavilySearchResults</span>(max_results=<span class="cn">3</span>)
+tools = [search]
+
+<span class="cm"># Agent prompt MUST include agent_scratchpad placeholder</span>
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a research assistant. Use web search to answer accurately."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>),
+    <span class="nm">MessagesPlaceholder</span>(variable_name=<span class="st">"agent_scratchpad"</span>)
+])
+
+llm = <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>, temperature=<span class="cn">0</span>)
+agent = create_tool_calling_agent(llm, tools, prompt)
+
+executor = <span class="nm">AgentExecutor</span>(
+    agent=agent,
+    tools=tools,
+    verbose=<span class="cn">True</span>,       <span class="cm"># logs each thought + action</span>
+    max_iterations=<span class="cn">6</span>,   <span class="cm"># prevent infinite loops</span>
+    return_intermediate_steps=<span class="cn">True</span>
+)
+
+result = executor.invoke({
+    <span class="st">"input"</span>: <span class="st">"What are the latest updates to LangChain in 2024? Summarise in 3 points."</span>
+})
+<span class="fn">print</span>(result[<span class="st">"output"</span>])
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"\nSteps taken: {len(result['intermediate_steps'])}"</span>)</pre>
+    </div>
+
+    <h3 class="sub-title">Example 5 — Conversational Memory Chain</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-lang">python · 05_memory_chatbot.py</span>
+      </div>
+<pre><span class="kw">from</span> langchain_openai <span class="kw">import</span> <span class="nm">ChatOpenAI</span>
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> <span class="nm">ChatPromptTemplate</span>, <span class="nm">MessagesPlaceholder</span>
+<span class="kw">from</span> langchain_core.runnables.history <span class="kw">import</span> <span class="nm">RunnableWithMessageHistory</span>
+<span class="kw">from</span> langchain_community.chat_message_histories <span class="kw">import</span> <span class="nm">ChatMessageHistory</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> <span class="nm">StrOutputParser</span>
+
+store = {}
+<span class="kw">def</span> <span class="fn">get_history</span>(sid): <span class="kw">return</span> store.setdefault(sid, <span class="nm">ChatMessageHistory</span>())
+
+prompt = <span class="nm">ChatPromptTemplate</span>.from_messages([
+    (<span class="st">"system"</span>, <span class="st">"You are a personal tutor. Track what the student has asked so far."</span>),
+    <span class="nm">MessagesPlaceholder</span>(<span class="st">"history"</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+chain = prompt | <span class="nm">ChatOpenAI</span>(model=<span class="st">"gpt-4o-mini"</span>) | <span class="nm">StrOutputParser</span>()
+chat = <span class="nm">RunnableWithMessageHistory</span>(chain, get_history, input_messages_key=<span class="st">"question"</span>, history_messages_key=<span class="st">"history"</span>)
+
+cfg = {<span class="st">"configurable"</span>: {<span class="st">"session_id"</span>: <span class="st">"student_1"</span>}}
+
+<span class="cm"># Simulated multi-turn conversation</span>
+turns = [
+    <span class="st">"I want to learn about neural networks."</span>,
+    <span class="st">"Can you give me an example of a simple one?"</span>,
+    <span class="st">"What was the first topic I asked about?"</span>   <span class="cm"># tests memory!</span>
+]
+<span class="kw">for</span> q <span class="kw">in</span> turns:
+    ans = chat.invoke({<span class="st">"question"</span>: q}, config=cfg)
+    <span class="fn">print</span>(<span class="fn">f</span><span class="st">"Q: {q}\nA: {ans}\n"</span>)</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 5: USE CASES ══════════════ -->
+<section id="usecases">
+  <div class="container">
+    <div class="section-label">// Section 05</div>
+    <h2 class="section-title">Real-World Use Cases</h2>
+
+    <!-- Use Case 1 -->
+    <div class="usecase-card">
+      <div class="uc-num">01</div>
+      <h3>🏢 Enterprise Knowledge Base Q&A (RAG)</h3>
+      <div class="uc-section">
+        <div class="uc-label">Problem Statement</div>
+        <p>A company has thousands of internal PDFs — HR policies, technical docs, product manuals — and employees waste hours hunting for answers through search or intranet portals that don't understand natural language.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Solution using LangChain</div>
+        <p>Ingest all documents with <code>PyPDFLoader</code>, chunk with <code>RecursiveCharacterTextSplitter</code>, embed with OpenAI embeddings, store in Pinecone. Build a RAG chain: employee asks a question → retriever fetches relevant chunks → GPT-4 answers grounded in actual policy text, with source citations. Add <code>RunnableWithMessageHistory</code> for multi-turn follow-ups.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Components Used</div>
+        <div class="tag-list">
+          <span class="tag">PyPDFLoader</span><span class="tag">RecursiveCharacterTextSplitter</span>
+          <span class="tag">OpenAIEmbeddings</span><span class="tag">Pinecone VectorStore</span>
+          <span class="tag">ChatOpenAI</span><span class="tag">RunnableWithMessageHistory</span>
+          <span class="tag">StrOutputParser</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Case 2 -->
+    <div class="usecase-card">
+      <div class="uc-num">02</div>
+      <h3>🛒 AI Customer Support Agent with Live Data</h3>
+      <div class="uc-section">
+        <div class="uc-label">Problem Statement</div>
+        <p>An e-commerce platform needs a 24/7 support bot that can check order status, process returns, answer product questions, and escalate to human agents — all from natural conversation.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Solution using LangChain</div>
+        <p>Build a tool-calling agent with 4 tools: <code>get_order_status(order_id)</code>, <code>initiate_return(order_id, reason)</code>, <code>search_products(query)</code>, and <code>escalate_to_human(reason)</code>. The agent decides which tool to invoke based on the user's message. Memory preserves the conversation state. A <code>ConversationSummaryMemory</code> compresses long histories to stay within token limits.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Components Used</div>
+        <div class="tag-list">
+          <span class="tag">ChatOpenAI</span><span class="tag">@tool decorator</span>
+          <span class="tag">create_tool_calling_agent</span><span class="tag">AgentExecutor</span>
+          <span class="tag">ConversationSummaryMemory</span><span class="tag">RunnableWithMessageHistory</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Case 3 -->
+    <div class="usecase-card">
+      <div class="uc-num">03</div>
+      <h3>📊 Automated Research Report Generator</h3>
+      <div class="uc-section">
+        <div class="uc-label">Problem Statement</div>
+        <p>A financial analyst needs to produce weekly market research reports synthesising news from multiple sources, including real-time data, competitor analysis, and sentiment scoring — currently taking 6 hours manually.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Solution using LangChain</div>
+        <p>Build a multi-step LCEL pipeline: (1) Tavily web search retrieves latest news, (2) a parallel chain simultaneously runs sentiment analysis and key entity extraction, (3) a final synthesis chain combines all results into a structured markdown report with sections, summaries, and risk flags. The entire pipeline takes ~30 seconds.</p>
+      </div>
+      <div class="uc-section">
+        <div class="uc-label">Components Used</div>
+        <div class="tag-list">
+          <span class="tag">TavilySearchResults</span><span class="tag">RunnableParallel</span>
+          <span class="tag">ChatPromptTemplate</span><span class="tag">LCEL Chains</span>
+          <span class="tag">StrOutputParser</span><span class="tag">PydanticOutputParser</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 6: PROS/CONS ══════════════ -->
+<section id="pros-cons">
+  <div class="container">
+    <div class="section-label">// Section 06</div>
+    <h2 class="section-title">Advantages & Limitations</h2>
+
+    <div class="pro-con">
+      <div class="pro-box">
+        <h4>✅ Strengths</h4>
+        <ul>
+          <li>Modular architecture — swap any component (LLM, memory, vector DB) without rewriting logic</li>
+          <li>LCEL gives type-safe, streaming, batch, and async support for free with <code>|</code> composition</li>
+          <li>Massive ecosystem — 100+ integrations for loaders, vector stores, LLM providers, tools</li>
+          <li>Rapid prototyping — a working RAG pipeline in under 30 lines of code</li>
+          <li>LangSmith integration for end-to-end tracing, evaluation, and prompt playground</li>
+          <li>Active community and weekly releases keeping pace with the fast LLM landscape</li>
+          <li>Model-agnostic — same code works with OpenAI, Anthropic, Groq, or a local Ollama model</li>
+        </ul>
+      </div>
+      <div class="con-box">
+        <h4>⚠️ Limitations</h4>
+        <ul>
+          <li>Steep learning curve — LCEL, Runnables, chains, agents and memory are all separate concepts to master</li>
+          <li>Abstraction overhead — debugging a multi-step chain with callbacks is significantly harder than debugging plain Python</li>
+          <li>Rapid API churn — breaking changes across versions are common; v0.1 → v0.2 → v0.3 migrations required large refactors</li>
+          <li>Latency — multiple LLM hops in agent loops can add seconds of latency per chain step</li>
+          <li>Cost — agentic loops with many tool calls can burn tokens quickly and unpredictably</li>
+          <li>Over-engineering risk — using LangChain for a simple one-shot LLM call adds unnecessary complexity</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>When NOT to use LangChain:</strong> If your application makes a single LLM call with a static prompt, LangChain is overkill — use the OpenAI SDK directly. If you need production-grade determinism, avoid agents (use pre-defined chains). For fine-tuning workflows, use Axolotl or HuggingFace Transformers instead.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECTION 7: CONCLUSION ══════════════ -->
+<section id="conclusion">
+  <div class="container">
+    <div class="section-label">// Section 07</div>
+    <h2 class="section-title">Conclusion & Future Scope</h2>
+
+    <p>
+      LangChain fundamentally changed how developers build with LLMs. By abstracting the messy plumbing of prompt engineering, memory management, tool integration, and multi-step orchestration, it allowed the community to go from prototype to production at unprecedented speed.
+    </p>
+
+    <div class="conclusion-grid">
+      <div class="takeaway-card">
+        <div class="tc-icon">⛓️</div>
+        <p>LCEL's pipe operator is one of the most elegant API designs in modern Python — compose, stream, and batch complex pipelines declaratively.</p>
+      </div>
+      <div class="takeaway-card">
+        <div class="tc-icon">🧠</div>
+        <p>Memory is a first-class concern: design your session management strategy early — buffer, window, or summary depending on conversation length.</p>
+      </div>
+      <div class="takeaway-card">
+        <div class="tc-icon">🎯</div>
+        <p>Agents are powerful but unpredictable. Always set <code>max_iterations</code>, add guardrails, and trace with LangSmith before deploying.</p>
+      </div>
+      <div class="takeaway-card">
+        <div class="tc-icon">📚</div>
+        <p>RAG is the killer feature: grounding LLMs in your private data unlocks enterprise use cases that pure LLMs simply cannot handle.</p>
+      </div>
+      <div class="takeaway-card">
+        <div class="tc-icon">🔌</div>
+        <p>Model-agnosticism is real: swapping <code>ChatOpenAI</code> for <code>ChatAnthropic</code> or <code>ChatOllama</code> truly requires one line.</p>
+      </div>
+      <div class="takeaway-card">
+        <div class="tc-icon">⚠️</div>
+        <p>Match tool complexity to need: a simple Q&A app needs zero LangChain; an agentic assistant benefits enormously from it.</p>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Future Scope</h3>
+    <p>
+      The LangChain ecosystem is rapidly evolving into something far more powerful than a chaining library:
+    </p>
+    <p>
+      <strong class="highlight">LangGraph</strong> — the next major evolution — treats agent workflows as directed graphs (not linear chains), enabling cycles, branching, and true multi-agent coordination with persistent shared state. Think state machines powered by LLMs.
+    </p>
+    <p>
+      <strong class="highlight2">Multi-Agent Systems</strong> — the frontier is hierarchical agent networks where a supervisor agent delegates tasks to specialised sub-agents (a coder agent, a search agent, a QA agent) in a collaborative loop.
+    </p>
+    <p>
+      <strong class="highlight3">LangSmith & Evals</strong> — as LLM applications mature, systematic evaluation and observability become critical. LangSmith's dataset-driven testing and production tracing are becoming essential for any serious deployment.
+    </p>
+    <p>
+      The bottom line: LangChain is the foundational layer of the modern AI application stack. Mastering it — its primitives, its patterns, and its limitations — is one of the highest-leverage skills a developer can develop in the current AI era.
+    </p>
+
+    <hr class="divider"/>
+    <div class="callout">
+      <strong>Key Insight:</strong> LangChain isn't magic — it's disciplined engineering. The developers who get the most out of it are those who understand the primitives deeply enough to know when <em>not</em> to use an abstraction, and when to drop down to raw Runnable composition for full control.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div style="margin-bottom:0.5rem;">
+    <span style="color:var(--accent)">LangChain</span> · Deep Technical Blog ·
+    <span style="color:var(--accent3)">Python</span> ·
+    <span style="color:var(--accent2)">OpenAI</span> ·
+    <span style="color:var(--accent)">LangChain Expression Language</span>
+  </div>
+  <div>All code examples use LangChain ≥ 0.3.x with latest LCEL patterns · Run in Python 3.10+</div>
+</footer>
+
+</body>
+</html>
